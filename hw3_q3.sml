@@ -15,6 +15,8 @@ if c = 0 then
     insert_t(f,ht, f(i), f(i), [], ht, key, value)
 else 
   insert_t(f,ht,i,c-1,tail@[Value(k,v)], xs,key,value)
+  |insert_t(f, ht,i,c,tail,Deleted::xs,key,value) = 
+    insert_t(f,ht, f(i), f(i), [], ht, key, value)
   |insert_t(f, ht,i,c,tail,x::xs,key,value) = 
     if c = 0 then
       tail@Value(key,value)::xs
