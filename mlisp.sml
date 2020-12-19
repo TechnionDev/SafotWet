@@ -19,7 +19,8 @@ fun real_parse (x::xs) = if isNumber(x)=true then CONS (ATOM (NUMBER (atoi (x)))
    |real_parse (nil) = ATOM (NIL);
 
 fun drop_final (x::nil) = nil
-  | drop_final (x::xs) = x::drop_final xs;
+  | drop_final (x::xs) = x::drop_final xs
+  | drop_final (nil) = nil;
 in
 fun parse ((x:string)::xs) =  if x = "(" then real_parse (drop_final(xs))
                               else ATOM (SYMBOL x)
