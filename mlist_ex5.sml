@@ -16,7 +16,40 @@ val a = ATOM s;
 
 
 (* // TODO: put in local and finish *)
-fun bind (p:SExp, env:(string -> SExp) list) = env;
+
+fun bind_t(f:SExp, p:SExp, env:(string -> SExp) list) =
+    (case f of
+        ATOM NIL => (case p of ATOM NIL => env |_ => raise MlispError)
+        |CONS (fa,fb) => 
+            (case fa of
+                ATOM fat => (
+                    case fat of
+                        SYMBOL s =>
+                        (case p of
+                            CONS (pa, pb) => 
+                            (case pa of ATOM pat => (case pat of NUMBER _ =>  
+                                (bind_t (fb, pb, defineNested s env pa))
+                                | _ => raise MlispError) | _ => raise MlispError
+                            )|_ => raise MlispError
+                        )
+                        |_ => raise MlispError
+                )
+                |_ => raise MlispError
+            )
+        |_ => raise MlispError
+    );
+
+
+fun bind (f, p:SExp, env:(string -> SExp) list) = 
+    case f of
+        CONS (a,_) => 
+            (case a of
+                CONS b => (bind_t (a, p, pushEnv (initEnv()) env))
+                |_ => raise MlispError)
+        |_ => raise MlispError
+    ;
+
+
 
 
 fun eval_t(s:SExp, env) = 
@@ -30,26 +63,25 @@ fun eval_t(s:SExp, env) =
           (case f of
             ATOM a => 
             (case a of 
-              SYMBOL str => eval_t (find str env, bind (p, env))
-              |_ => raise MlispError
+                SYMBOL fname => 
+                (* Handle builtins first *)
+                if isUser fname then
+                
+                else
+                eval_t (find fname env, bind (find fname env, p, env))
+                |_ => raise MlispError
             )
+            |_ => raise MlispError
           )
     | _ => raise MlispError;
 
-val e = emptyNestedEnv();
-val e = defineNested "s" e (ATOM s);
-val e = defineNested "n" e (ATOM n);
 
-eval_t (a, e);
+fun eval s env = 
+    case s of
+        SExp => eval_t(s, env)
+        |_ => raise MlispError;
 
 
-fun eval(s:NIL, env) = (s, env)
-    | eval(s:NUMBER, env) = (s, env)
-    | eval(s:SYMBOL, env) = eval (find s env, env); (* // TODO: probably fix this *)
-    (*
-    | eval(f::xs, env) =if isUser then
-                            (((find (eval (f, env)) env) xs), env) (* // TODO: Bind (define) actual to formal in a new env scope *)
-                        else
-                            (NIL, env);
+val env = emptyNestedEnv();
 
-                            *)
+val (res,env) = (eval (parse (tokenize "(define pi 3)")) env);
