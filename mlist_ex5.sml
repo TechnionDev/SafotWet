@@ -2,6 +2,7 @@ exception MlispError;
 exception PresumablyImpossibleError;
 
 (* // TODO: put in local *)
+local
 fun isBuiltin (x) =    if x = "+" then true
                     else if x = "-" then true
                     else if x = "*" then true
@@ -11,17 +12,6 @@ fun isBuiltin (x) =    if x = "+" then true
                     else if x = "cdr" then true
                     else if x = "define" then true
                     else false;
-
-
-(* // TODO: Remove this shit *)
-val n = (NUMBER 5);
-val s = (SYMBOL "n");
-val nn = NIL;
-val c = CONS (ATOM n, ATOM s);
-val a = ATOM s;
-
-
-(* // TODO: put in local and finish *)
 
 fun bind_t(f:SExp, p:SExp, env:(string -> SExp) list) =
     (case f of
@@ -33,10 +23,8 @@ fun bind_t(f:SExp, p:SExp, env:(string -> SExp) list) =
                         SYMBOL s =>
                         (case p of
                             CONS (pa, pb) => 
-                            (case pa of ATOM pat => (case pat of NUMBER _ =>  
                                 (bind_t (fb, pb, defineNested s env pa))
-                                |_ => raise MlispError) |_ => raise MlispError
-                            )|_ => raise MlispError
+                            |_ => raise MlispError
                         )
                         |_ => raise MlispError
                 )
@@ -50,7 +38,7 @@ fun bind (f, p:SExp, env:(string -> SExp) list) =
     case f of
         CONS (a,_) => 
             (case a of
-                CONS b => (bind_t (a, p, pushEnv (initEnv()) env))
+                CONS _ => (bind_t (a, p, pushEnv (initEnv()) env))
                 |_ => raise MlispError)
         |_ => raise MlispError
     ;
@@ -66,7 +54,12 @@ fun eval_t(s:SExp, env) =
             SYMBOL sym => if sym = "nil" then
                     (ATOM NIL, env)
                 else
-                    ((find sym env), env) (* TODO: Eval and not just return it *)
+                    (case find sym env of
+                        ATOM (NUMBER n) => (ATOM (NUMBER n), env)
+                        |ATOM NIL => (ATOM NIL, env)
+                        |ATOM (SYMBOL sym) => (first (eval_t (ATOM (SYMBOL sym), env)), env)
+                        |CONS cons => (first (eval_t (CONS cons, env)), env)
+                    )
             |NUMBER num => (s, env)
             |NIL => (s, env))
     | CONS (f,p) => 
@@ -193,13 +186,13 @@ fun eval_t(s:SExp, env) =
                                 ATOM NIL, defineNested p1 env p2
                                 (* ATOM NIL, defineNested fname env (CONS (p1, p2)) *)
                             )|CONS (ATOM (SYMBOL p1), CONS (CONS p2, CONS(CONS p3, ATOM NIL))) => (
-                                ATOM NIL, defineNested fname env (CONS (CONS p2, CONS p3))
+                                ATOM NIL, defineNested p1 env (CONS (CONS p2, CONS p3))
                             )|_ => raise MlispError (* TODO: Define for funsions *)
                     )
                     else raise PresumablyImpossibleError
                 else
                     (case find fname env of
-                        CONS (_, body) => (eval_t (body, bind (find fname env, p, env))) (* // TODO: popEnv *)
+                        CONS (params, body) => (eval_t (body, bind (find fname env, p, env))) (* // TODO: popEnv *)
                         |_ => raise MlispError
                     )
                 |_ => raise MlispError
@@ -207,43 +200,6 @@ fun eval_t(s:SExp, env) =
             |_ => raise MlispError
           );
 
-
+in
 fun eval s env = eval_t(s, env);
-
-
-(* // TODO: Remove this *)
-
-val (res,env) = (eval (parse (tokenize "(define calc (p) (+ p 3))")) (emptyNestedEnv ()));
-val (res,env) = (eval (parse (tokenize "(define pi 3)")) env);
-
-(* val (res,env) = (eval (parse (tokenize "(define area (r) ( * pi ( * r r)))")) env);  *)
-val aaa="here";
-val (res, env) = eval (parse (tokenize "(calc 1)")) env;
-val (res, env) = eval (parse (tokenize "(+ 5 pi)")) env;
-
-val (res, env) = eval (parse (tokenize "(define hello nil)")) env;
-
-val (res,env) = eval (parse (tokenize "(+ 2 3)")) (emptyNestedEnv ()); 
-res = ATOM (NUMBER 5);
-val (res,env) = eval (parse (tokenize "(- 2 3)")) (emptyNestedEnv ());
-res = ATOM (NUMBER ~1);
-val (res,env) = eval (parse (tokenize "(* 2 3)")) (emptyNestedEnv ());
-res = ATOM (NUMBER 6);
-val (res,env) = eval (parse (tokenize "(div 10 2)")) (emptyNestedEnv ());
-res = ATOM (NUMBER 5);
-val (res,env) = eval (parse (tokenize "(cons 1 2)")) (emptyNestedEnv ());
-res = CONS (ATOM (NUMBER 1),ATOM (NUMBER 2));
-val (res,env) = eval (parse (tokenize "(cons 1 (cons 2 3))")) (emptyNestedEnv ());
-res = CONS (ATOM (NUMBER 1),CONS (ATOM (NUMBER 2),ATOM (NUMBER 3)));
-val (res,env) = eval (parse (tokenize "(cons 1 (cons 2 (cons 3 nil)))")) (emptyNestedEnv ());
-res =
-  CONS
-    (ATOM (NUMBER 1),CONS (ATOM (NUMBER 2),CONS (ATOM (NUMBER 3),ATOM NIL)));
-val (res,env) = eval (parse (tokenize "(car (cons 1 (cons 2 nil)))")) (emptyNestedEnv ());
-res = ATOM (NUMBER 1);
-val (res,env) = eval (parse (tokenize "(cdr (cons 1 (cons 2 nil)))")) (emptyNestedEnv ());
-res = CONS (ATOM (NUMBER 2),ATOM NIL);
-
-
-exception END;
-raise END;
+end;
