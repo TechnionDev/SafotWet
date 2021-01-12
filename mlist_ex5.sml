@@ -1,8 +1,7 @@
 exception MlispError;
-exception PresumablyImpossibleError;
 
-(* // TODO: put in local *)
 local
+exception PresumablyImpossibleError;
 fun isBuiltin (x) =    if x = "+" then true
                     else if x = "-" then true
                     else if x = "*" then true
@@ -181,25 +180,55 @@ fun eval_t(s:SExp, env) =
                     )
                     else if fname = "define" then (
                         case p of
-                            (* Handle const define *)
+                            (* Handle define of SExp *)
                             CONS (ATOM (SYMBOL p1), CONS (p2, ATOM NIL)) => (
                                 ATOM NIL, defineNested p1 env p2
-                                (* ATOM NIL, defineNested fname env (CONS (p1, p2)) *)
-                            )|CONS (ATOM (SYMBOL p1), CONS (CONS p2, CONS(CONS p3, ATOM NIL))) => (
-                                ATOM NIL, defineNested p1 env (CONS (CONS p2, CONS p3))
-                            )|_ => raise MlispError (* TODO: Define for funsions *)
+                            (* Handle function define *)
+                            )|CONS (ATOM (SYMBOL p1), CONS (CONS p2, CONS(p3, ATOM NIL))) => (
+                                ATOM NIL, defineNested p1 env (CONS (CONS p2, p3))
+                            )|_ => raise MlispError
                     )
                     else raise PresumablyImpossibleError
                 else
                     (case find fname env of
-                        CONS (params, body) => (eval_t (body, bind (find fname env, p, env))) (* // TODO: popEnv *)
+                        CONS (params, body) => (case (eval_t (body, bind (find fname env, p, env))) of
+                            (res, _) => (res, env))
                         |_ => raise MlispError
                     )
                 |_ => raise MlispError
             )
             |_ => raise MlispError
           );
-
 in
-fun eval s env = eval_t(s, env);
+fun eval s env = eval_t(s, env) handle _ => raise MlispError
 end;
+
+
+"here";
+val (res,env) = (eval (parse (tokenize "(define pi 3)")) (emptyNestedEnv ()));
+val (res,env) = (eval (parse (tokenize "(define identity (r) r)")) env);
+val (res,env) = (eval (parse (tokenize "(identity (cons 2 (cons pi nil))")) env);
+res = ATOM (NUMBER 1);
+
+val (res,env) = (eval (parse (tokenize "(identity nil)")) env);
+res = ATOM (NUMBER 2);
+
+val (res,env) = (eval (parse (tokenize "(define pi 3)")) env);
+val (res,env) = (eval (parse (tokenize "(define area (r) (* pi (* r r)))")) env);
+val (res,env) = (eval (parse (tokenize "(define pi 7)")) env);
+val (res,env) = (eval (parse (tokenize "(area 1)")) env);
+res = ATOM (NUMBER 7);
+
+val (res,env) = (eval (parse (tokenize "(area (+ 1 1))")) env);
+res = ATOM (NUMBER 28);
+
+val (res,env) = (eval (parse (tokenize "(define pi 3)")) env);
+val (res,env) = (eval (parse (tokenize "(define area (r p) (* pi (* p r)))")) env);
+val (res,env) = (eval (parse (tokenize "(area (+ 1 1) 5)")) env);
+res = ATOM (NUMBER 30);
+
+val (res,env) = (eval (parse (tokenize "(define pi car (cons 1 (cons 2 nil)))")) env);
+val (res,env) = (eval (parse (tokenize "(equal pi)")) env);
+res = ATOM (NUMBER 1);
+
+raise Undefined;
