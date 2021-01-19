@@ -96,15 +96,15 @@ winner([X|XS],[Y|YS],card(P1,P2),Res) :-
 
 /**Q2.1*/
 
-replace_t(Head,[_|Tail],N,New,Res) :-
+replace(Head,[_|Tail],N,New,Res) :-
     N #= 0,
     append(Head, [New], T),
     append(T,Tail,Res).
 
-replace_t(Head,[X|Tail], N, New, Res) :-
+replace(Head,[X|Tail], N, New, Res) :-
     N#>0,
     append(Head,[X],T),
-    replace_t(T,Tail,N-1,New,Res).
+    replace(T,Tail,N-1,New,Res).
 
 replace([_|Tail], N, New, Res) :-
     N#=0,
@@ -112,7 +112,7 @@ replace([_|Tail], N, New, Res) :-
 
 replace([L|Tail], N, New, Res) :-
     N#>0,
-    replace_t([L], Tail,N-1,New,Res).
+    replace([L], Tail,N-1,New,Res).
 
 
 /**Q2.2*/
@@ -135,5 +135,20 @@ turing(State, Actions, tape(Data, Index), Res) :-
     replace(Actions, _, action(State, NState, X, Y, r), Actions),
     replace(Data, Index, Y, NData),
     turing(NState, Actions, tape(NData, Index+1), Res).
+
+/**Q3*/
+
+change(Total, _, []) :-
+    Total #= 0.
+
+change(Total, Last, [C|Res]) :-
+    member(C, [1,5,10,50,100]),
+    C #=< Last,
+    Total-C #>= 0,
+    change(Total-C, C, Res).
+
+
+change(Total, Res) :-
+    change(Total, 100, Res).
 
 /**Queries*/
