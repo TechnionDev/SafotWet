@@ -1,12 +1,5 @@
-% Constraint Logic Programming
-:- use_module(library(dif)).	% Sound inequality
-:- use_module(library(clpfd)).	% Finite domain constraints
-:- use_module(library(clpb)).	% Boolean constraints
-:- use_module(library(chr)).	% Constraint Handling Rules
-:- use_module(library(when)).	% Coroutining
-%:- use_module(library(clpq)).  % Constraints over rational numbers
+% Daniel Bondar 206560856 danielbondar@campus.technion.ac.il  Gur Telem 206631848 gurt@campus.technion.ac.il
 
-% Your program goes here
 /**Q1.1*/
 card(number,suit).
 card(X,Y):- X #>= 2, X #=< 14, (Y ='clubs';Y ='hearts';Y ='spades';Y ='diamonds').
