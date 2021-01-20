@@ -1,3 +1,4 @@
+:- use_module(library(clpfd)).
 % Daniel Bondar 206560856 danielbondar@campus.technion.ac.il  Gur Telem 206631848 gurt@campus.technion.ac.il
 
 /**Q1.1*/
@@ -112,20 +113,20 @@ replace([L|Tail], N, New, Res) :-
 
 turing(State, Actions, tape(Data, Index), Res) :-
     replace(Data, Index, X, Data),
-    replace(Actions, _, action(State, _, X, Y, h), Actions),
+    member(action(State, _, X, Y, h), Actions),
     replace(Data, Index, Y, NData),
     Index #= N,
     Res=tape(NData, N).
 
 turing(State, Actions, tape(Data, Index), Res) :-
     replace(Data, Index, X, Data),
-    replace(Actions, _, action(State, NState, X, Y, l), Actions),
+    member(action(State, NState, X, Y, l), Actions),
     replace(Data, Index, Y, NData),
     turing(NState, Actions, tape(NData, Index-1), Res).
 
 turing(State, Actions, tape(Data, Index), Res) :-
     replace(Data, Index, X, Data),
-    replace(Actions, _, action(State, NState, X, Y, r), Actions),
+    member(action(State, NState, X, Y, r), Actions),
     replace(Data, Index, Y, NData),
     turing(NState, Actions, tape(NData, Index+1), Res).
 
@@ -143,5 +144,3 @@ change(Total, Last, [C|Res]) :-
 
 change(Total, Res) :-
     change(Total, 100, Res).
-
-/**Queries*/
